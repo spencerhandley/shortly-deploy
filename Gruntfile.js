@@ -3,6 +3,10 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     concat: {
+      dist: {
+        src: ['app/**/*.js', 'public/client/*.js'],
+        dest: 'public/dist/built.js',
+      },
     },
 
     mochaTest: {
@@ -21,12 +25,18 @@ module.exports = function(grunt) {
     },
 
     uglify: {
+      my_target: {
+        files: {
+          'public/dist/output.min.js': ['public/dist/built.js']
+        }
+      }
     },
 
     jshint: {
-      files: [
+      files: {
+        src: ['app/**/*.js']
         // Add filespec list here
-      ],
+      },
       options: {
         force: 'true',
         jshintrc: '.jshintrc',
@@ -38,6 +48,15 @@ module.exports = function(grunt) {
     },
 
     cssmin: {
+      my_target: {
+        files: [{
+          expand: true,
+          cwd: 'public',
+          src: ['*.css', '!*.min.css'],
+          dest: 'public/dist/',
+          ext: '.min.css'
+        }]
+      }
     },
 
     watch: {
@@ -56,9 +75,15 @@ module.exports = function(grunt) {
         tasks: ['cssmin']
       }
     },
-
     shell: {
-      prodServer: {
+      scaleSite: {
+        command: "azure site scale mode standard shortlyMH"
+      },
+      gitPush: {
+        command: "git push azure"
+      },
+      downScaleSite: {
+        command:"azure site scale mode free shortlyMH"
       }
     },
   });
@@ -74,6 +99,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server-dev', function (target) {
     // Running nodejs in a different process and displaying output on the main console
+    grunt.task.run([ 'concat', 'uglify']);
     var nodemon = grunt.util.spawn({
          cmd: 'grunt',
          grunt: true,
@@ -84,7 +110,20 @@ module.exports = function(grunt) {
 
     grunt.task.run([ 'watch' ]);
   });
+  grunt.registerTask('server-prod', function (target) {
+    // Running nodejs in a different process and displaying output on the main console
+    grunt.task.run(['concat', 'uglify' ]);
 
+    var nodemon = grunt.util.spawn({
+         cmd: 'grunt',
+         grunt: true,
+         args: 'nodemon'
+    });
+    nodemon.stdout.pipe(process.stdout);
+    nodemon.stderr.pipe(process.stderr);
+
+    grunt.task.run([ 'watch' ]);
+  });
   ////////////////////////////////////////////////////
   // Main grunt tasks
   ////////////////////////////////////////////////////
@@ -94,19 +133,26 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('build', [
+    'concat',
+    'uglify',
+    'jshint',
+    'mochaTest'
   ]);
 
   grunt.registerTask('upload', function(n) {
     if(grunt.option('prod')) {
+      grunt.task.run(['shell:scaleSite','shell:gitPush','shell:downScaleSite'])
+      grunt.task.run([ 'server-prod']);
+
       // add your production server task here
     } else {
       grunt.task.run([ 'server-dev' ]);
     }
   });
 
-  grunt.registerTask('deploy', [
-    // add your deploy tasks here
-  ]);
+  grunt.registerTask('deploy', function(){
+    grunt.task.run('upload');
+  });
 
 
 };
