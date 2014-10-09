@@ -82,8 +82,14 @@ module.exports = function(grunt) {
       scaleSite: {
         command: "azure site scale mode standard shortlyMH"
       },
+      gitAdd: {
+        command: "git add ."
+      },
+      gitCommit: {
+        command: "git commit"
+      },
       gitPush: {
-        command: "git push azure"
+        command: "git push azure master"
       },
       downScaleSite: {
         command:"azure site scale mode free shortlyMH"
@@ -145,7 +151,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('upload', function(n) {
     if(grunt.option('prod')) {
-      grunt.task.run(['shell:scaleSite','shell:gitPush','shell:downScaleSite'])
+      grunt.task.run(['shell:scaleSite','shell:gitAdd','shell:gitCommit','shell:gitPush','shell:downScaleSite'])
       grunt.task.run([ 'server-prod']);
 
       // add your production server task here
