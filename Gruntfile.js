@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     concat: {
       dist: {
-        src: ['app/**/*.js', 'public/client/*.js'],
+        src: ['public/client/*.js'],
         dest: 'public/dist/built.js',
       },
     },
@@ -25,6 +25,9 @@ module.exports = function(grunt) {
     },
 
     uglify: {
+      options: {
+        mangle: false
+      },
       my_target: {
         files: {
           'public/dist/output.min.js': ['public/dist/built.js']
@@ -99,7 +102,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server-dev', function (target) {
     // Running nodejs in a different process and displaying output on the main console
-    grunt.task.run([ 'concat', 'uglify']);
+    grunt.task.run([ 'concat', 'uglify', 'cssmin']);
     var nodemon = grunt.util.spawn({
          cmd: 'grunt',
          grunt: true,
@@ -112,7 +115,7 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('server-prod', function (target) {
     // Running nodejs in a different process and displaying output on the main console
-    grunt.task.run(['concat', 'uglify' ]);
+    grunt.task.run(['concat', 'uglify', 'cssmin']);
 
     var nodemon = grunt.util.spawn({
          cmd: 'grunt',
@@ -135,6 +138,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build', [
     'concat',
     'uglify',
+    'cssmin',
     'jshint',
     'mochaTest'
   ]);
